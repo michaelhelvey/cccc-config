@@ -1,0 +1,21 @@
+{
+  "name": "bun-template",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "prepare": "rs hooks",
+    "format": "rs fmt",
+    "lint": "rs lint --fix",
+    "check": "rs check --type-check",
+    "validate": "bun run format && bun run lint && bun run check && bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "rstack": "^0.8.3",
+    "zod": "4.6.5"
+  },
+  "peerDependencies": {
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "editor.defaultFormatter": "rstack.rstack",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.rslint": "explicit"
+  },
+  "[javascript]": { "editor.defaultFormatter": "rstack.rstack" },
+  "[javascriptreact]": { "editor.defaultFormatter": "rstack.rstack" },
+  "[json]": { "editor.defaultFormatter": "rstack.rstack" },
+  "[json5]": { "editor.defaultFormatter": "rstack.rstack" },
+  "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[markdown]": { "editor.defaultFormatter": "rstack.rstack" },
+  "[mdx]": { "editor.defaultFormatter": "rstack.rstack" },
+  "[toml]": { "editor.defaultFormatter": "rstack.rstack" },
+  "[typescript]": { "editor.defaultFormatter": "rstack.rstack" },
+  "[typescriptreact]": { "editor.defaultFormatter": "rstack.rstack" },
+  "[yaml]": { "editor.defaultFormatter": "rstack.rstack" },
+  "js/ts.tsdk.additionalLocations": ["./node_modules/typescript/bin"],
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "js/ts.tsdk.path": "./node_modules/typescript/bin",
+  "js/ts.experimental.useTsgo": true,
+  "debug.javascript.codelens.npmScripts": "never"
+}
