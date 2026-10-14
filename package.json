@@ -1,6 +1,6 @@
 {
   "name": "@michaelhelvey/cccc-config",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Cognitive and cyclomatic complexity checks for TypeScript (and more), configured with an ESLint-style flat config and powered by the cccc Rust engine through bun:ffi",
   "keywords": [
     "complexity",

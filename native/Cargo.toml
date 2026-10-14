@@ -7,6 +7,10 @@ license = "MIT"
 publish = false
 description = "C ABI over the cccc complexity engine, for use from bun:ffi"
 
+# This crate is its own workspace. Without this table, cargo fails when the package is installed in a
+# project that has a Cargo workspace at its root.
+[workspace]
+
 [lib]
 crate-type = ["cdylib"]
 
