@@ -1,6 +1,7 @@
 // Configuration guide: https://rstack.rs/config
 // Rstack is used for linting, formatting, and git hooks only. Bun runs,
-// tests, and resolves all TypeScript directly -- there is no build step.
+// tests, and resolves all TypeScript directly. `tsc` writes only the .d.ts
+// files for publish (`bun run build:types`).
 import { define } from "rstack";
 
 define.lint(({ js, ts }) => [

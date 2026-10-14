@@ -281,9 +281,15 @@ To change the cccc version, change the `rev` in `native/Cargo.toml` and `CCCC_VE
 ```sh
 bun install              # also builds the native library
 bun run build:native     # build the native library again
+bun run build:types      # write the .d.ts files to dist/types (prepack does this)
 bun run validate         # format, lint, type check, and test
 bun run complexity       # run the CLI on this package
 ```
 
 The tests in `src/native.test.ts` and `src/cli.test.ts` use the real native library, so build it
 before you run `bun test`.
+
+Bun runs the `.ts` files in `src` directly, so the package has no JavaScript build. The package also
+contains `.d.ts` files in `dist/types`, and the `types` export condition points to them. Thus the
+TypeScript compiler of a consumer checks only the declarations and not the source with the compiler
+options of the consumer.

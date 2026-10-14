@@ -1,6 +1,6 @@
 {
   "name": "@michaelhelvey/cccc-config",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cognitive and cyclomatic complexity checks for TypeScript (and more), configured with an ESLint-style flat config and powered by the cccc Rust engine through bun:ffi",
   "keywords": [
     "complexity",
@@ -22,9 +22,13 @@
   "license": "MIT",
   "author": "Michael Helvey",
   "type": "module",
+  "types": "./dist/types/index.d.ts",
   "module": "src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./src/index.ts"
+    },
     "./package.json": "./package.json"
   },
   "bin": {
@@ -34,6 +38,7 @@
     "bin",
     "src",
     "!src/**/*.test.ts",
+    "dist/types",
     "native/Cargo.toml",
     "native/Cargo.lock",
     "native/src"
@@ -52,11 +57,13 @@
     "prepare": "rs hooks",
     "postinstall": "bun run build:native",
     "build:native": "cargo build --release --manifest-path native/Cargo.toml",
+    "build:types": "rm -rf dist/types && tsc -p tsconfig.build.json",
     "complexity": "bun bin/cccc-config.ts",
     "format": "rs fmt",
     "lint": "rs lint --fix",
     "check": "rs check --type-check",
-    "validate": "bun run format && bun run lint && bun run check && bun test"
+    "validate": "bun run format && bun run lint && bun run check && bun test",
+    "prepack": "bun run build:types"
   },
   "dependencies": {
     "minimatch": "^10.2.6",
@@ -64,6 +71,7 @@
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",
-    "rstack": "^0.8.3"
+    "rstack": "^0.8.3",
+    "typescript": "^7.0.2"
   }
 }
