@@ -23,6 +23,7 @@ src/legacy/importer.ts
 
 ## Requirements
 
+- macOS or Linux. The package does not support Windows.
 - [Bun](https://bun.sh) 1.2 or later. The package uses `bun:ffi`, so it does not run on Node.js.
 - A Rust toolchain (`cargo`, 1.95 or later) and a C compiler. The install step compiles the native
   library from source. Some language grammars (tree-sitter, Ruby Prism) contain C code, and the Ruby
@@ -30,14 +31,8 @@ src/legacy/importer.ts
 
 ## Install
 
-This package is not on npm. Install it from git or from a local copy.
-
 ```sh
-# From a git repository
-bun add -d git+https://github.com/<owner>/cccc-config.git
-
-# From a local copy
-bun add -d file:../cccc-config
+bun add -d @michaelhelvey/cccc-config
 ```
 
 The `postinstall` script compiles the native library (`cargo build --release`). The first build
