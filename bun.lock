@@ -13,6 +13,12 @@
         "rstack": "^0.8.3",
         "typescript": "^7.0.2",
       },
+      "optionalDependencies": {
+        "@michaelhelvey/cccc-config-darwin-arm64": "0.2.0",
+        "@michaelhelvey/cccc-config-darwin-x64": "0.2.0",
+        "@michaelhelvey/cccc-config-linux-arm64": "0.2.0",
+        "@michaelhelvey/cccc-config-linux-x64": "0.2.0",
+      },
     },
   },
   "packages": {

@@ -1,6 +1,6 @@
 {
   "name": "@michaelhelvey/cccc-config",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Cognitive and cyclomatic complexity checks for TypeScript (and more), configured with an ESLint-style flat config and powered by the cccc Rust engine through bun:ffi",
   "keywords": [
     "complexity",
@@ -75,5 +75,11 @@
     "@types/bun": "^1.4.2",
     "rstack": "^0.8.3",
     "typescript": "^7.0.2"
+  },
+  "optionalDependencies": {
+    "@michaelhelvey/cccc-config-darwin-arm64": "0.2.0",
+    "@michaelhelvey/cccc-config-darwin-x64": "0.2.0",
+    "@michaelhelvey/cccc-config-linux-arm64": "0.2.0",
+    "@michaelhelvey/cccc-config-linux-x64": "0.2.0"
   }
 }
