@@ -25,9 +25,6 @@ src/legacy/importer.ts
 
 - macOS or Linux. The package does not support Windows.
 - [Bun](https://bun.sh) 1.2 or later. The package uses `bun:ffi`, so it does not run on Node.js.
-- A Rust toolchain (`cargo`, 1.95 or later) and a C compiler. The install step compiles the native
-  library from source. Some language grammars (tree-sitter, Ruby Prism) contain C code, and the Ruby
-  adapter also needs `libclang`.
 
 ## Install
 
@@ -35,9 +32,15 @@ src/legacy/importer.ts
 bun add -d @michaelhelvey/cccc-config
 ```
 
-The `postinstall` script compiles the native library (`cargo build --release`). The first build
-takes some minutes. Bun does not run lifecycle scripts of dependencies until you trust them, so add
-the package to `trustedDependencies` in your `package.json`:
+The install includes a prebuilt native library for these platforms: macOS arm64 and x64, and Linux
+arm64 and x64 with glibc. Each platform has its own package, such as
+`@michaelhelvey/cccc-config-linux-x64`, and the package manager installs only the package of your
+platform. You do not need Rust.
+
+On a different platform (for example Linux with musl), the `postinstall` script compiles the native
+library from source. This needs a Rust toolchain (`cargo`, 1.95 or later), a C compiler, and
+`libclang`, and it takes some minutes. Bun does not run lifecycle scripts of dependencies until you
+trust them, so add the package to `trustedDependencies` in your `package.json`:
 
 ```json
 {
@@ -45,9 +48,7 @@ the package to `trustedDependencies` in your `package.json`:
 }
 ```
 
-Then install again, or run `bun pm trust @michaelhelvey/cccc-config`.
-
-If you do not want to trust the script, build the library yourself:
+Then install again, or run `bun pm trust @michaelhelvey/cccc-config`. Or build the library yourself:
 
 ```sh
 cd node_modules/@michaelhelvey/cccc-config && bun run build:native
@@ -270,7 +271,9 @@ cccc.config.ts ──► ConfigArray ──► file walk (ignored directories ar
   at a pinned git commit and exports a C ABI: `cccc_languages`, `cccc_analyze_files`,
   `cccc_analyze_source`, `cccc_version`, and `cccc_string_free`. Each function takes one JSON
   request and returns one JSON response. A panic in an analyzer becomes an error for that file.
-- `src/native.ts` loads the library with `dlopen` and parses each response with zod.
+- `src/native.ts` finds the library (`resolveLibraryPath`: `CCCC_FFI_LIBRARY`, then a local build,
+  then the prebuilt package of the platform), loads it with `dlopen`, and parses each response with
+  zod.
 - `src/config-array.ts` contains the flat config logic.
 
 To change the cccc version, change the `rev` in `native/Cargo.toml` and `CCCC_VERSION` in
@@ -287,7 +290,23 @@ bun run complexity       # run the CLI on this package
 ```
 
 The tests in `src/native.test.ts` and `src/cli.test.ts` use the real native library, so build it
-before you run `bun test`.
+before you run `bun test`. In a git checkout, `bun install` always builds it, and a local build
+comes before a prebuilt package.
+
+### Release
+
+The Native workflow (`.github/workflows/native.yml`) builds and tests the library for each platform
+that has a prebuilt package (`npm/<platform>`). To publish a version, push the commit, wait for its
+Native run, then:
+
+```sh
+gh run list --workflow native.yml                 # find the run of the commit
+bun run release 0.2.0 <run-id> --dry-run          # check the packages
+bun run release 0.2.0 <run-id>                    # publish
+```
+
+The script publishes each platform package, then sets the version and the `optionalDependencies` of
+this package and publishes it. Commit the changed `package.json` files and `bun.lock` after.
 
 Bun runs the `.ts` files in `src` directly, so the package has no JavaScript build. The package also
 contains `.d.ts` files in `dist/types`, and the `types` export condition points to them. Thus the

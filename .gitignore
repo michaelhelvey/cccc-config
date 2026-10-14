@@ -35,3 +35,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # native library build output
 native/target
+
+# prebuilt libraries that scripts/release.ts copies into the platform packages
+npm/*/libcccc_ffi.*

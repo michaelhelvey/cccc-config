@@ -1,6 +1,6 @@
 import { CString, dlopen, FFIType, ptr, suffix, type FFIFunction, type Pointer } from "bun:ffi";
 import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { z } from "zod";
 
 /** Complexity metrics of one function-like unit (function, method, arrow, accessor). */
@@ -122,17 +122,72 @@ const symbols = {
 
 type Library = ReturnType<typeof dlopen<typeof symbols>>;
 
+/** The platforms that have a prebuilt library package, as `${process.platform}-${process.arch}`. */
+export const PREBUILT_PLATFORMS = [
+  "darwin-arm64",
+  "darwin-x64",
+  "linux-arm64",
+  "linux-x64",
+] as const;
+
+/** Returns the name of the package that has the prebuilt library for a platform. */
+export function prebuiltPackageName(platform: string, arch: string): string {
+  return `@michaelhelvey/cccc-config-${platform}-${arch}`;
+}
+
+/** The environment of {@link resolveLibraryPath}. Tests can replace each part. */
+export interface LibraryLookup {
+  env: Record<string, string | undefined>;
+  platform: string;
+  arch: string;
+  /** The cargo build output in this package. */
+  localBuild: string;
+  exists(path: string): boolean;
+  /** Returns the path of the `package.json` of a package, or `undefined` when it is not installed. */
+  resolvePackageJson(name: string): string | undefined;
+}
+
+const defaultLookup: LibraryLookup = {
+  env: process.env,
+  platform: process.platform,
+  arch: process.arch,
+  localBuild: join(import.meta.dir, "..", "native", "target", "release", `libcccc_ffi.${suffix}`),
+  exists: existsSync,
+  resolvePackageJson(name) {
+    try {
+      return Bun.resolveSync(`${name}/package.json`, import.meta.dir);
+    } catch {
+      return undefined;
+    }
+  },
+};
+
 /**
- * Returns the path of the native library: the `path` argument, then the
- * `CCCC_FFI_LIBRARY` environment variable, then the cargo build output in
- * this package.
+ * Returns the path of the native library. The order is:
+ *
+ * 1. The `path` argument.
+ * 2. The `CCCC_FFI_LIBRARY` environment variable.
+ * 3. The cargo build output in this package, when it exists.
+ * 4. The library in the prebuilt package for this platform, when it is installed.
+ *
+ * When there is no library, it returns the path of the cargo build output.
  */
-export function resolveLibraryPath(path?: string): string {
-  return (
-    path ??
-    process.env[LIBRARY_PATH_ENV] ??
-    join(import.meta.dir, "..", "native", "target", "release", `libcccc_ffi.${suffix}`)
-  );
+export function resolveLibraryPath(path?: string, lookup: LibraryLookup = defaultLookup): string {
+  const explicit = path ?? lookup.env[LIBRARY_PATH_ENV];
+  if (explicit !== undefined) {
+    return explicit;
+  }
+  if (lookup.exists(lookup.localBuild)) {
+    return lookup.localBuild;
+  }
+  const manifest = lookup.resolvePackageJson(prebuiltPackageName(lookup.platform, lookup.arch));
+  if (manifest !== undefined) {
+    const prebuilt = join(dirname(manifest), basename(lookup.localBuild));
+    if (lookup.exists(prebuilt)) {
+      return prebuilt;
+    }
+  }
+  return lookup.localBuild;
 }
 
 /** The complexity engine that calls the cccc Rust library through `bun:ffi`. */
@@ -150,7 +205,8 @@ export class NativeEngine implements ComplexityEngine {
     const path = resolveLibraryPath(libraryPath);
     if (!existsSync(path)) {
       throw new NativeError(
-        `The cccc native library is not at ${path}. ` +
+        `The cccc native library is not at ${path}, and there is no prebuilt library ` +
+          `for ${process.platform}-${process.arch}. ` +
           "Run `bun run build:native` in the @michaelhelvey/cccc-config package " +
           `(this needs a Rust toolchain), or set ${LIBRARY_PATH_ENV}.`,
       );

@@ -36,6 +36,7 @@
   },
   "files": [
     "bin",
+    "scripts/postinstall.ts",
     "src",
     "!src/**/*.test.ts",
     "dist/types",
@@ -55,7 +56,7 @@
   },
   "scripts": {
     "prepare": "rs hooks",
-    "postinstall": "bun run build:native",
+    "postinstall": "bun scripts/postinstall.ts",
     "build:native": "cargo build --release --manifest-path native/Cargo.toml",
     "build:types": "rm -rf dist/types && tsc -p tsconfig.build.json",
     "complexity": "bun bin/cccc-config.ts",
@@ -63,7 +64,8 @@
     "lint": "rs lint --fix",
     "check": "rs check --type-check",
     "validate": "bun run format && bun run lint && bun run check && bun test",
-    "prepack": "bun run build:types"
+    "prepack": "bun run build:types",
+    "release": "bun scripts/release.ts"
   },
   "dependencies": {
     "minimatch": "^10.2.6",

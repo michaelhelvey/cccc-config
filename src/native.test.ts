@@ -2,7 +2,13 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { NativeEngine, NativeError } from "./native.ts";
+import {
+  LIBRARY_PATH_ENV,
+  NativeEngine,
+  NativeError,
+  resolveLibraryPath,
+  type LibraryLookup,
+} from "./native.ts";
 
 const engine = new NativeEngine();
 afterAll(() => engine.close());
@@ -87,5 +93,48 @@ describe("NativeEngine", () => {
 
   test("throws a helpful error when the library is missing", () => {
     expect(() => new NativeEngine("/nowhere/libcccc_ffi.dylib")).toThrow(/build:native/);
+  });
+});
+
+describe("resolveLibraryPath", () => {
+  const localBuild = "/pkg/native/target/release/libcccc_ffi.so";
+  const prebuiltManifest = "/nm/@michaelhelvey/cccc-config-linux-x64/package.json";
+  const prebuilt = "/nm/@michaelhelvey/cccc-config-linux-x64/libcccc_ffi.so";
+
+  function lookup(files: string[], env: Record<string, string> = {}): LibraryLookup {
+    return {
+      env,
+      platform: "linux",
+      arch: "x64",
+      localBuild,
+      exists: (path) => files.includes(path),
+      resolvePackageJson: (name) => (files.includes(name) ? prebuiltManifest : undefined),
+    };
+  }
+
+  test("uses the prebuilt package of the current platform when there is no local build", () => {
+    const found = lookup(["@michaelhelvey/cccc-config-linux-x64", prebuilt]);
+
+    expect(resolveLibraryPath(undefined, found)).toBe(prebuilt);
+  });
+
+  test("prefers a local build to the prebuilt package", () => {
+    const found = lookup([localBuild, "@michaelhelvey/cccc-config-linux-x64", prebuilt]);
+
+    expect(resolveLibraryPath(undefined, found)).toBe(localBuild);
+  });
+
+  test("prefers the environment variable to all libraries on disk", () => {
+    const found = lookup([localBuild, "@michaelhelvey/cccc-config-linux-x64", prebuilt], {
+      [LIBRARY_PATH_ENV]: "/opt/libcccc_ffi.so",
+    });
+
+    expect(resolveLibraryPath(undefined, found)).toBe("/opt/libcccc_ffi.so");
+  });
+
+  test("ignores the prebuilt package of a different platform", () => {
+    const found = lookup(["@michaelhelvey/cccc-config-darwin-arm64", prebuilt]);
+
+    expect(resolveLibraryPath(undefined, found)).toBe(localBuild);
   });
 });

@@ -1,0 +1,24 @@
+{
+  "name": "@michaelhelvey/cccc-config-darwin-x64",
+  "version": "0.1.2",
+  "description": "The prebuilt cccc native library of @michaelhelvey/cccc-config for darwin x64",
+  "homepage": "https://github.com/michaelhelvey/cccc-config#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michaelhelvey/cccc-config.git"
+  },
+  "license": "MIT",
+  "author": "Michael Helvey",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "libcccc_ffi.dylib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
