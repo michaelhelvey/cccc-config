@@ -306,7 +306,8 @@ bun run release 0.2.0 <run-id>                    # publish
 ```
 
 The script publishes each platform package, then sets the version and the `optionalDependencies` of
-this package and publishes it. Commit the changed `package.json` files and `bun.lock` after.
+this package and publishes it. Commit the changed `package.json` files and `bun.lock` after. Run it
+in a terminal: npm can ask you to log in for each of the five packages.
 
 Bun runs the `.ts` files in `src` directly, so the package has no JavaScript build. The package also
 contains `.d.ts` files in `dist/types`, and the `types` export condition points to them. Thus the

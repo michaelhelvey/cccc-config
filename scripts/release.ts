@@ -11,7 +11,9 @@
  * 3. Sets the version and the `optionalDependencies` of this package, and updates `bun.lock`.
  * 4. Publishes this package.
  *
- * With `--dry-run`, it publishes nothing and does not change `package.json`.
+ * With `--dry-run`, it publishes nothing and changes no `package.json`.
+ *
+ * Run it in a terminal. npm can ask you to log in for each package.
  *
  * @module
  */
@@ -43,6 +45,20 @@ async function writeManifest(path: string, manifest: object): Promise<void> {
   await Bun.write(path, `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
+/**
+ * Runs `npm publish` in a directory. npm must have the terminal for its login prompt, and Bun Shell
+ * pipes the output, so this does not use Bun Shell.
+ */
+async function npmPublish(cwd: string, dryRun: boolean): Promise<void> {
+  const proc = Bun.spawn(["npm", "publish", ...(dryRun ? ["--dry-run"] : [])], {
+    cwd,
+    stdio: ["inherit", "inherit", "inherit"],
+  });
+  if ((await proc.exited) !== 0) {
+    throw new Error(`npm publish failed in ${cwd}`);
+  }
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
@@ -50,7 +66,6 @@ async function main(): Promise<void> {
   if (version === undefined || runId === undefined || !/^\d+\.\d+\.\d+/.test(version)) {
     throw new Error("Usage: bun run release <version> <run-id> [--dry-run]");
   }
-  const publish = dryRun ? ["--dry-run"] : [];
 
   const artifacts = await mkdtemp(join(tmpdir(), "cccc-release-"));
   await $`gh run download ${runId} --dir ${artifacts}`.cwd(ROOT);
@@ -67,7 +82,13 @@ async function main(): Promise<void> {
     const manifestPath = join(dir, "package.json");
     const manifest = await readManifest(manifestPath);
     await writeManifest(manifestPath, { ...manifest, version });
-    await $`npm publish ${publish}`.cwd(dir);
+    try {
+      await npmPublish(dir, dryRun);
+    } finally {
+      if (dryRun) {
+        await writeManifest(manifestPath, manifest);
+      }
+    }
   }
 
   if (dryRun) {
@@ -85,7 +106,7 @@ async function main(): Promise<void> {
   );
   await writeManifest(manifestPath, { ...manifest, version, optionalDependencies });
   await $`bun install`.cwd(ROOT);
-  await $`npm publish`.cwd(ROOT);
+  await npmPublish(ROOT, false);
 
   console.log(`\nPublished ${version}. Commit package.json, bun.lock, and npm/*/package.json.`);
 }
