@@ -1,0 +1,88 @@
+# Builds the native library for each platform that has a prebuilt package, and tests each build.
+# `bun run release` downloads the artifacts of a run of this workflow and publishes them.
+
+name: Native
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: darwin-arm64
+            runner: macos-latest
+            target: aarch64-apple-darwin
+            library: libcccc_ffi.dylib
+            test: true
+          # There is no Intel macOS runner, so cross-compile. An arm64 runner cannot run the tests.
+          - platform: darwin-x64
+            runner: macos-latest
+            target: x86_64-apple-darwin
+            library: libcccc_ffi.dylib
+            test: false
+          # The oldest Ubuntu runner gives the oldest glibc, so the library loads on more systems.
+          - platform: linux-x64
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            library: libcccc_ffi.so
+            test: true
+          - platform: linux-arm64
+            runner: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            library: libcccc_ffi.so
+            test: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: native
+          key: ${{ matrix.target }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Build
+        run: cargo build --release --manifest-path native/Cargo.toml --target ${{ matrix.target }}
+      - name: Copy the library
+        run: |
+          mkdir -p out
+          cp native/target/${{ matrix.target }}/release/${{ matrix.library }} out/
+      - name: Show the newest glibc symbol version that the library needs
+        if: runner.os == 'Linux'
+        run: objdump -T out/${{ matrix.library }} | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
+
+      # The install step does not build, because the tests use the library of this run.
+      - name: Test
+        if: matrix.test
+        run: |
+          bun install --frozen-lockfile --ignore-scripts
+          CCCC_FFI_LIBRARY="$PWD/out/${{ matrix.library }}" bun test
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: libcccc_ffi-${{ matrix.platform }}
+          path: out/${{ matrix.library }}
+          if-no-files-found: error

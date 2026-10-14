@@ -1,0 +1,24 @@
+{
+  "name": "@michaelhelvey/cccc-config-linux-x64",
+  "version": "0.1.2",
+  "description": "The prebuilt cccc native library of @michaelhelvey/cccc-config for linux x64",
+  "homepage": "https://github.com/michaelhelvey/cccc-config#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michaelhelvey/cccc-config.git"
+  },
+  "license": "MIT",
+  "author": "Michael Helvey",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "libcccc_ffi.so"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
