@@ -1,6 +1,6 @@
 {
   "name": "@michaelhelvey/cccc-config-darwin-arm64",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "The prebuilt cccc native library of @michaelhelvey/cccc-config for darwin arm64",
   "homepage": "https://github.com/michaelhelvey/cccc-config#readme",
   "repository": {
